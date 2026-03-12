@@ -51,6 +51,7 @@
       <header class="top-bar">
         <span class="top-logo">🧠 오름브래인</span>
         <span id="streak-display" class="streak">🔥 <span id="streak-count">0</span>일</span>
+        <button id="btn-theme-toggle" class="theme-toggle" title="다크/라이트 모드">🌙</button>
       </header>
 
       <div class="home-content">
@@ -113,7 +114,7 @@
         <button class="btn-icon" id="btn-nback-back">← 나가기</button>
         <span class="game-header-title">N-back <span id="nback-n-display">2</span>-back</span>
         <span class="game-trial-count">
-          <span id="nback-current">0</span> / <span id="nback-total">20</span>
+          <span id="nback-current">0</span> / <span id="nback-total">24</span>
         </span>
       </header>
 
@@ -247,26 +248,60 @@
         <span id="gonogo-timer" class="timer">60</span>
       </header>
 
-      <!-- 규칙 설명 -->
+      <!-- 규칙 설명 (상세) -->
       <div id="gonogo-rule" class="rule-overlay">
         <div class="rule-card">
-          <h2>규칙</h2>
-          <p>
-            <span class="go-symbol">●</span> 초록 원 → 빨리 탭!<br />
-            <span class="nogo-symbol">✕</span> 빨간 X → 참기!
+          <h2>🛑 Go/No-Go 게임</h2>
+          <p class="rule-desc">
+            자극이 나타나면 <strong>빠르게 판단</strong>하세요!<br />
+            단, 빨간 X가 나오면 <strong>절대로 탭하지 마세요.</strong>
           </p>
-          <button id="btn-gonogo-start" class="btn btn-primary btn-lg">준비됐어요!</button>
+
+          <!-- 시각적 규칙 설명 -->
+          <div class="gonogo-rule-examples">
+            <div class="gonogo-rule-item go-rule">
+              <div class="gonogo-rule-symbol go-preview">●</div>
+              <div class="gonogo-rule-text">
+                <strong>초록 원</strong><br />
+                <span>빠르게 탭! ⚡ (0.5초 이내)</span>
+              </div>
+              <span class="gonogo-rule-tag go-tag">✅ PRESS</span>
+            </div>
+            <div class="gonogo-rule-item nogo-rule">
+              <div class="gonogo-rule-symbol nogo-preview">✕</div>
+              <div class="gonogo-rule-text">
+                <strong>빨간 X</strong><br />
+                <span>절대 탭하지 마세요! 🛑</span>
+              </div>
+              <span class="gonogo-rule-tag nogo-tag">❌ STOP</span>
+            </div>
+          </div>
+
+          <!-- 난이도 경고 -->
+          <div class="gonogo-warning">
+            <p>⚠️ <strong>주의</strong>: 자극이 빠르게 바뀝니다 (0.5초!)<br />
+            30초 이후 빨간 X가 더 자주 나와요!</p>
+          </div>
+
+          <div class="nback-rule-tip" style="margin-top:0">
+            🧠 이 게임은 우측 하전두이랑(rIFG) 억제 회로를 훈련합니다<br />
+            <span style="font-size:11px; opacity:0.7">(PMC 2012 / NIH 2024 연구 기반)</span>
+          </div>
+
+          <button id="btn-gonogo-start" class="btn btn-primary btn-lg">준비됐어요! 도전! 🔥</button>
         </div>
       </div>
 
       <!-- 게임 플레이 -->
       <div id="gonogo-play" class="gonogo-play hidden">
         <div class="gonogo-stats">
-          <span>반응: <strong id="gonogo-go-count">0</strong></span>
-          <span>실수: <strong id="gonogo-errors">0</strong></span>
+          <span>✅ 반응: <strong id="gonogo-go-count">0</strong></span>
+          <span>🔥 콤보: <strong id="gonogo-combo">0</strong></span>
+          <span>❌ 실수: <strong id="gonogo-errors">0</strong></span>
         </div>
         <div id="gonogo-arena" class="gonogo-arena">
           <div id="gonogo-stimulus" class="gonogo-stimulus hidden"></div>
+          <div id="gonogo-combo-popup" class="combo-popup hidden"></div>
         </div>
       </div>
     </section>

@@ -10,6 +10,7 @@ const LS = {
   LAST_DATE:  'ob_last_date',
   NBACK_LEVEL:'ob_nback_level',
   SESSIONS:   'ob_sessions',
+  THEME:      'ob_theme',  // 'light' | 'dark'
 };
 
 /* ─────────── 상태 읽기/쓰기 ─────────── */
@@ -20,20 +21,48 @@ const State = {
   get lastDate()   { return localStorage.getItem(LS.LAST_DATE) || ''; },
   get nbackLevel() { return parseInt(localStorage.getItem(LS.NBACK_LEVEL) || '2', 10); },
   get sessions()   { return JSON.parse(localStorage.getItem(LS.SESSIONS) || '[]'); },
+  get theme()      { return localStorage.getItem(LS.THEME) || 'auto'; },
 
   set nickname(v)   { localStorage.setItem(LS.NICKNAME, v); },
   set visited(v)    { localStorage.setItem(LS.VISITED, v ? '1' : ''); },
   set streak(v)     { localStorage.setItem(LS.STREAK, String(v)); },
   set lastDate(v)   { localStorage.setItem(LS.LAST_DATE, v); },
   set nbackLevel(v) { localStorage.setItem(LS.NBACK_LEVEL, String(v)); },
+  set theme(v)      { localStorage.setItem(LS.THEME, v); },
 
   pushSession(s) {
     const sessions = State.sessions;
     sessions.push(s);
-    if (sessions.length > 20) sessions.shift(); // 최근 20개만 유지
+    if (sessions.length > 20) sessions.shift();
     localStorage.setItem(LS.SESSIONS, JSON.stringify(sessions));
   },
 };
+
+/* ─────────── 테마 관리 ─────────── */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('btn-theme-toggle');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  // 현재 실제 적용된 테마 기준으로 전환
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next    = current === 'dark' ? 'light' : 'dark';
+  State.theme   = next;
+  applyTheme(next);
+}
+
+function initTheme() {
+  const saved = State.theme;
+  if (saved === 'dark' || saved === 'light') {
+    applyTheme(saved);
+  } else {
+    // 시스템 설정 따름
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(prefersDark ? 'dark' : 'light');
+  }
+}
 
 /* ─────────── 스트릭 업데이트 ─────────── */
 function updateStreak() {
@@ -145,6 +174,15 @@ function initHome() {
   document.getElementById('btn-all-games').addEventListener('click', () => {
     startGame('nback');
   });
+
+  // 테마 토글
+  const themeBtn = document.getElementById('btn-theme-toggle');
+  if (themeBtn) {
+    themeBtn.onclick = toggleTheme;
+    // 현재 테마에 맞게 아이콘 업데이트
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    themeBtn.textContent = current === 'dark' ? '☀️' : '🌙';
+  }
 }
 
 /* ─────────── 게임 라우팅 ─────────── */
@@ -322,7 +360,12 @@ function initStroop() {
       scoreEl.textContent = String(score);
       comboEl.textContent = String(combo);
     };
-    game.onTick = (t) => { timerEl.textContent = String(t); };
+    game.onTick = (t, urgency) => {
+      timerEl.textContent = String(t);
+      timerEl.classList.remove('timer-warn', 'timer-danger');
+      if (urgency === 'danger')    timerEl.classList.add('timer-danger');
+      else if (urgency === 'warn') timerEl.classList.add('timer-warn');
+    };
     game.onComplete = (result) => {
       GameResults.stroop = result;
       nextGameAfter('stroop');
@@ -339,19 +382,21 @@ function initStroop() {
 }
 
 /* ============================================
-   Go/No-Go 화면
+   Go/No-Go 화면 v2
    ============================================ */
 function initGoNoGo() {
   showScreen('gonogo');
 
-  const ruleEl   = document.getElementById('gonogo-rule');
-  const playEl   = document.getElementById('gonogo-play');
-  const stimEl   = document.getElementById('gonogo-stimulus');
-  const arenaEl  = document.getElementById('gonogo-arena');
-  const timerEl  = document.getElementById('gonogo-timer');
-  const goEl     = document.getElementById('gonogo-go-count');
-  const errEl    = document.getElementById('gonogo-errors');
-  const screenEl = document.getElementById('screen-gonogo');
+  const ruleEl    = document.getElementById('gonogo-rule');
+  const playEl    = document.getElementById('gonogo-play');
+  const stimEl    = document.getElementById('gonogo-stimulus');
+  const arenaEl   = document.getElementById('gonogo-arena');
+  const timerEl   = document.getElementById('gonogo-timer');
+  const goEl      = document.getElementById('gonogo-go-count');
+  const comboEl   = document.getElementById('gonogo-combo');
+  const errEl     = document.getElementById('gonogo-errors');
+  const screenEl  = document.getElementById('screen-gonogo');
+  const comboPopup= document.getElementById('gonogo-combo-popup');
 
   let game;
 
@@ -361,33 +406,70 @@ function initGoNoGo() {
     showScreen('home');
   };
 
-  // 준비됐어요
+  // 콤보 팝업 표시 헬퍼
+  function showComboPopup(text, color) {
+    if (!comboPopup) return;
+    comboPopup.textContent = text;
+    comboPopup.style.color = color;
+    comboPopup.classList.remove('hidden');
+    comboPopup.classList.add('combo-pop');
+    setTimeout(() => {
+      comboPopup.classList.add('hidden');
+      comboPopup.classList.remove('combo-pop');
+    }, 700);
+  }
+
+  // 준비됐어요 버튼
   document.getElementById('btn-gonogo-start').onclick = () => {
     ruleEl.classList.add('hidden');
     playEl.classList.remove('hidden');
 
     game = new GoNoGoGame();
+
+    // 자극 표시
     game.onShowStimulus = ({ type }) => {
       stimEl.className = `gonogo-stimulus ${type}`;
       stimEl.textContent = type === 'go' ? '●' : '✕';
       stimEl.classList.remove('hidden');
     };
-    game.onHideStimulus = () => {
-      stimEl.classList.add('hidden');
+    game.onHideStimulus = () => { stimEl.classList.add('hidden'); };
+
+    // 타이머 — 긴장감 색상 전환
+    game.onTick = (t) => {
+      timerEl.textContent = String(t);
+      timerEl.classList.remove('timer-warn', 'timer-danger');
+      if (t <= 10)      timerEl.classList.add('timer-danger');
+      else if (t <= 15) timerEl.classList.add('timer-warn');
     };
-    game.onTick = (t) => { timerEl.textContent = String(t); };
-    game.onStats = (goCount, errors) => {
-      goEl.textContent  = String(goCount);
-      errEl.textContent = String(errors);
+
+    // 스탯 업데이트 (goCount, errors, combo)
+    game.onStats = (goCount, errors, combo) => {
+      goEl.textContent    = String(goCount);
+      errEl.textContent   = String(errors);
+      comboEl.textContent = String(combo);
+      // 콤보 달성 시 팝업
+      if (combo >= 3 && combo % 3 === 0) {
+        showComboPopup(`🔥 ${combo}연속!`, '#F97316');
+      }
     };
+
+    // 오반응 (No-Go 탭)
     game.onCommission = () => {
       screenEl.classList.add('gonogo-flash');
       setTimeout(() => screenEl.classList.remove('gonogo-flash'), 500);
+      showComboPopup('❌ 참으세요!', '#EF4444');
     };
+
+    // 늦은 반응 (RTD 초과)
+    game.onLateError = () => {
+      showComboPopup('⚡ 더 빠르게!', '#7C3AED');
+    };
+
     game.onComplete = (result) => {
       GameResults.gonogo = result;
       nextGameAfter('gonogo');
     };
+
     game.start();
   };
 
@@ -460,6 +542,7 @@ function setBar(barId, valId, pct) {
    앱 진입점
    ============================================ */
 (function init() {
+  initTheme();      // 다크/라이트 모드 초기화
   initOnboarding();
 
   // 재방문이면 바로 홈
