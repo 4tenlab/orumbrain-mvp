@@ -117,21 +117,79 @@
         </span>
       </header>
 
-      <!-- 카운트다운 -->
-      <div id="nback-countdown" class="countdown-overlay">
+      <!-- ① 규칙 설명 오버레이 -->
+      <div id="nback-rule" class="rule-overlay">
+        <div class="rule-card nback-rule-card">
+          <h2>🧠 N-back 게임이란?</h2>
+          <p class="rule-desc">
+            한글 음절이 하나씩 나타납니다.<br />
+            <strong>N칸 전</strong>에 봤던 글자와 <strong>지금 글자</strong>가<br />
+            같으면 <span class="tag-same">✅ 같다</span>, 다르면 <span class="tag-diff">❌ 다르다</span>를 누르세요.
+          </p>
+
+          <!-- 시퀀스 예시 -->
+          <div class="nback-rule-example">
+            <p class="rule-example-title">예시 — 2-back (2칸 전과 비교)</p>
+            <div class="nback-seq">
+              <div class="nback-seq-item">
+                <span class="nback-seq-char">가</span>
+                <span class="nback-seq-num">1번째</span>
+              </div>
+              <div class="nback-seq-arrow">→</div>
+              <div class="nback-seq-item">
+                <span class="nback-seq-char">나</span>
+                <span class="nback-seq-num">2번째</span>
+              </div>
+              <div class="nback-seq-arrow">→</div>
+              <div class="nback-seq-item nback-seq-target">
+                <span class="nback-seq-char">가</span>
+                <span class="nback-seq-num">3번째</span>
+                <span class="nback-seq-badge same">✅ 1번째와 같음!</span>
+              </div>
+              <div class="nback-seq-arrow">→</div>
+              <div class="nback-seq-item nback-seq-diff">
+                <span class="nback-seq-char">다</span>
+                <span class="nback-seq-num">4번째</span>
+                <span class="nback-seq-badge diff">❌ 2번째(나)와 다름</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nback-rule-tip">
+            💡 처음 <span id="nback-tip-n">2</span>개는 비교할 대상이 없으니 그냥 기억만 하세요!
+          </div>
+
+          <button id="btn-nback-rule-start" class="btn btn-primary btn-lg">준비됐어요! 시작 ▶</button>
+        </div>
+      </div>
+
+      <!-- ② 카운트다운 -->
+      <div id="nback-countdown" class="countdown-overlay hidden">
         <span id="countdown-num" class="countdown-number">3</span>
       </div>
 
-      <!-- 게임 플레이 -->
+      <!-- ③ 게임 플레이 -->
       <div id="nback-play" class="nback-play hidden">
-        <div class="stimulus-card" id="nback-stimulus">
-          <span id="nback-char" class="stimulus-char">가</span>
+
+        <!-- 자극 표시 단계: 글자 보여줌 -->
+        <div id="nback-stimulus-phase" class="nback-phase">
+          <div class="stimulus-card" id="nback-stimulus">
+            <span id="nback-char" class="stimulus-char">가</span>
+          </div>
+          <p id="nback-phase-label" class="nback-phase-label">기억하세요...</p>
         </div>
-        <p class="nback-question">N칸 전과 같나요?</p>
-        <div class="nback-buttons">
-          <button id="btn-nback-same" class="btn btn-success btn-xl">✅ 같다</button>
-          <button id="btn-nback-diff" class="btn btn-danger btn-xl">❌ 다르다</button>
+
+        <!-- 응답 단계: 자극 사라진 후 버튼 활성화 -->
+        <div id="nback-response-phase" class="nback-response-phase hidden">
+          <p class="nback-question">
+            <span id="nback-n-hint">2</span>칸 전과 같은 글자였나요?
+          </p>
+          <div class="nback-buttons">
+            <button id="btn-nback-same" class="btn btn-success btn-xl">✅ 같다</button>
+            <button id="btn-nback-diff" class="btn btn-danger btn-xl">❌ 다르다</button>
+          </div>
         </div>
+
         <div class="feedback-bar" id="nback-feedback"></div>
       </div>
     </section>

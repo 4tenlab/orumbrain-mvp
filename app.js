@@ -166,47 +166,79 @@ function nextGameAfter(current) {
 function initNBack() {
   showScreen('nback');
 
-  const game = new NBackGame({ n: State.nbackLevel });
+  const n = State.nbackLevel;
+  const game = new NBackGame({ n });
 
-  const charEl      = document.getElementById('nback-char');
-  const stimCard    = document.getElementById('nback-stimulus');
-  const feedback    = document.getElementById('nback-feedback');
-  const nbackPlay   = document.getElementById('nback-play');
-  const countdownEl = document.getElementById('nback-countdown');
-  const countNum    = document.getElementById('countdown-num');
-  const curEl       = document.getElementById('nback-current');
-  const nEl         = document.getElementById('nback-n-display');
+  // DOM 요소
+  const ruleEl       = document.getElementById('nback-rule');
+  const countdownEl  = document.getElementById('nback-countdown');
+  const nbackPlay    = document.getElementById('nback-play');
+  const stimPhase    = document.getElementById('nback-stimulus-phase');
+  const respPhase    = document.getElementById('nback-response-phase');
+  const charEl       = document.getElementById('nback-char');
+  const stimCard     = document.getElementById('nback-stimulus');
+  const phaseLabel   = document.getElementById('nback-phase-label');
+  const feedback     = document.getElementById('nback-feedback');
+  const countNum     = document.getElementById('countdown-num');
+  const curEl        = document.getElementById('nback-current');
+  const nEl          = document.getElementById('nback-n-display');
+  const nHintEl      = document.getElementById('nback-n-hint');
+  const nTipEl       = document.getElementById('nback-tip-n');
 
-  nEl.textContent = String(game.n);
+  // N값 표시
+  nEl.textContent   = String(n);
+  nHintEl.textContent = String(n);
+  if (nTipEl) nTipEl.textContent = String(n);
 
-  // 나가기
+  // 나가기 버튼
   document.getElementById('btn-nback-back').onclick = () => {
-    game.stop(); showScreen('home');
+    game.stop();
+    showScreen('home');
   };
 
-  // 응답 버튼
+  // 응답 버튼 (응답 단계에서만 활성)
   document.getElementById('btn-nback-same').onclick = () => game.respond(true);
   document.getElementById('btn-nback-diff').onclick = () => game.respond(false);
 
-  // 콜백 설정
+  /* ── 게임 콜백 ── */
+
+  // 자극 표시 단계: 글자 보여주고 버튼 숨김
   game.onShowStimulus = (char) => {
     charEl.textContent = char;
     stimCard.classList.remove('correct', 'wrong');
     feedback.className = 'feedback-bar';
+    phaseLabel.textContent = '기억하세요...';
+
+    // 자극 단계 보이기 / 응답 단계 숨기기
+    stimPhase.classList.remove('hidden');
+    respPhase.classList.add('hidden');
   };
+
+  // 응답 단계: 글자 사라지고 버튼 활성화
+  game.onShowResponse = () => {
+    stimPhase.classList.add('hidden');
+    respPhase.classList.remove('hidden');
+  };
+
+  // 진행 카운터
   game.onProgress = (cur) => { curEl.textContent = String(cur); };
+
+  // 피드백 (정답/오답)
   game.onFeedback = (correct) => {
     if (correct === true) {
-      stimCard.classList.add('correct');
       feedback.classList.add('correct');
     } else if (correct === false) {
-      stimCard.classList.add('wrong');
       feedback.classList.add('wrong');
     }
+    // 피드백 보여준 후 자극 단계로 복귀 준비
+    respPhase.classList.add('hidden');
+    stimPhase.classList.remove('hidden');
+    phaseLabel.textContent = '다음 글자를 기억하세요...';
   };
+
+  // 완료
   game.onComplete = (result) => {
     GameResults.nback = result;
-    // 난이도 적응
     const sessions = State.sessions;
     sessions.push({ accuracy: result.accuracy });
     State.nbackLevel = NBackGame.adaptLevel(sessions, State.nbackLevel);
@@ -214,25 +246,38 @@ function initNBack() {
     nextGameAfter('nback');
   };
 
-  // 카운트다운 후 시작
-  let count = 3;
-  countdownEl.classList.remove('hidden');
-  nbackPlay.classList.add('hidden');
-  countNum.textContent = String(count);
+  /* ── 규칙 설명 → 카운트다운 → 게임 시작 ── */
 
-  const cdInterval = setInterval(() => {
-    count--;
-    if (count > 0) {
-      countNum.textContent = String(count);
-    } else if (count === 0) {
-      countNum.textContent = '시작!';
-    } else {
-      clearInterval(cdInterval);
-      countdownEl.classList.add('hidden');
-      nbackPlay.classList.remove('hidden');
-      game.start();
-    }
-  }, 1000);
+  // 규칙 화면 표시 (카운트다운, 플레이는 숨김)
+  ruleEl.classList.remove('hidden');
+  countdownEl.classList.add('hidden');
+  nbackPlay.classList.add('hidden');
+
+  document.getElementById('btn-nback-rule-start').onclick = () => {
+    // 규칙 숨기고 카운트다운 시작
+    ruleEl.classList.add('hidden');
+    countdownEl.classList.remove('hidden');
+
+    let count = 3;
+    countNum.textContent = String(count);
+
+    const cdInterval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        countNum.textContent = String(count);
+      } else if (count === 0) {
+        countNum.textContent = '시작!';
+      } else {
+        clearInterval(cdInterval);
+        countdownEl.classList.add('hidden');
+        nbackPlay.classList.remove('hidden');
+        // 초기 상태: 자극 단계 보이기
+        stimPhase.classList.remove('hidden');
+        respPhase.classList.add('hidden');
+        game.start();
+      }
+    }, 1000);
+  };
 }
 
 /* ============================================
