@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="오름브래인 — 하루 5분, 뇌과학 기반 인지 훈련 앱. N-back, Stroop, Go/No-Go 3종 게임으로 작업기억과 인지 억제 능력을 훈련하세요." />
+  <title>오름브래인 🧠 — 뇌과학 인지 훈련</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <!-- 스타일 -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===== 화면 1: 온보딩 ===== -->
+    <section id="screen-onboarding" class="screen active">
+      <div class="onboarding-inner">
+        <div class="logo-wrap">
+          <span class="logo-icon">🧠</span>
+          <h1 class="logo-text">오름브래인</h1>
+        </div>
+        <p class="headline">하루 5분, 뇌과학 기반 인지 훈련</p>
+        <p class="subheadline">N-back · Stroop · Go/No-Go 3종 게임</p>
+
+        <div class="input-group">
+          <label for="input-nickname" class="sr-only">닉네임</label>
+          <input
+            id="input-nickname"
+            type="text"
+            maxlength="10"
+            placeholder="닉네임을 입력하세요 (최대 10자)"
+            autocomplete="off"
+          />
+        </div>
+
+        <button id="btn-start" class="btn btn-primary btn-lg" disabled>
+          시작하기 →
+        </button>
+
+        <p class="legal-notice">
+          ※ 이 앱은 과학적 흥미를 위한 콘텐츠이며,<br />
+          의료기기 또는 치료 목적이 아닙니다.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== 화면 2: 홈 ===== -->
+    <section id="screen-home" class="screen">
+      <header class="top-bar">
+        <span class="top-logo">🧠 오름브래인</span>
+        <span id="streak-display" class="streak">🔥 <span id="streak-count">0</span>일</span>
+      </header>
+
+      <div class="home-content">
+        <!-- 인사 카드 -->
+        <div class="card greeting-card">
+          <p id="greeting-text" class="greeting-name"></p>
+          <p id="brain-age-text" class="brain-age"></p>
+        </div>
+
+        <!-- 게임 카드 3종 -->
+        <div class="game-cards">
+          <!-- N-back -->
+          <div class="card game-card" id="card-nback" data-game="nback">
+            <div class="game-card-icon" style="background: var(--color-nback)">🔵</div>
+            <div class="game-card-info">
+              <h2 class="game-title">N-back</h2>
+              <p class="game-desc">작업기억 훈련</p>
+              <p class="game-level" id="nback-level-label">난이도: 2-back</p>
+            </div>
+            <button class="btn btn-outline btn-sm" data-action="start-game" data-game="nback">시작 ▶</button>
+          </div>
+
+          <!-- Stroop -->
+          <div class="card game-card" id="card-stroop" data-game="stroop">
+            <div class="game-card-icon" style="background: var(--color-stroop)">🟡</div>
+            <div class="game-card-info">
+              <h2 class="game-title">Stroop</h2>
+              <p class="game-desc">인지 억제 훈련</p>
+              <p class="game-level">45초 도전</p>
+            </div>
+            <button class="btn btn-outline btn-sm" data-action="start-game" data-game="stroop">시작 ▶</button>
+          </div>
+
+          <!-- Go/No-Go -->
+          <div class="card game-card" id="card-gonogo" data-game="gonogo">
+            <div class="game-card-icon" style="background: var(--color-gonogo)">🟢</div>
+            <div class="game-card-info">
+              <h2 class="game-title">Go/No-Go</h2>
+              <p class="game-desc">반응 억제 훈련</p>
+              <p class="game-level">60초 도전</p>
+            </div>
+            <button class="btn btn-outline btn-sm" data-action="start-game" data-game="gonogo">시작 ▶</button>
+          </div>
+        </div>
+
+        <!-- 오늘의 뇌과학 카드 -->
+        <div class="card tip-card">
+          <p class="tip-label">🔬 오늘의 뇌과학</p>
+          <p id="brain-tip" class="tip-text"></p>
+        </div>
+
+        <!-- 전체 훈련 시작 -->
+        <button id="btn-all-games" class="btn btn-primary btn-lg">전체 훈련 시작 🚀</button>
+      </div>
+    </section>
+
+    <!-- ===== 화면 3: N-back 게임 ===== -->
+    <section id="screen-nback" class="screen game-screen">
+      <header class="game-header">
+        <button class="btn-icon" id="btn-nback-back">← 나가기</button>
+        <span class="game-header-title">N-back <span id="nback-n-display">2</span>-back</span>
+        <span class="game-trial-count">
+          <span id="nback-current">0</span> / <span id="nback-total">20</span>
+        </span>
+      </header>
+
+      <!-- 카운트다운 -->
+      <div id="nback-countdown" class="countdown-overlay">
+        <span id="countdown-num" class="countdown-number">3</span>
+      </div>
+
+      <!-- 게임 플레이 -->
+      <div id="nback-play" class="nback-play hidden">
+        <div class="stimulus-card" id="nback-stimulus">
+          <span id="nback-char" class="stimulus-char">가</span>
+        </div>
+        <p class="nback-question">N칸 전과 같나요?</p>
+        <div class="nback-buttons">
+          <button id="btn-nback-same" class="btn btn-success btn-xl">✅ 같다</button>
+          <button id="btn-nback-diff" class="btn btn-danger btn-xl">❌ 다르다</button>
+        </div>
+        <div class="feedback-bar" id="nback-feedback"></div>
+      </div>
+    </section>
+
+    <!-- ===== 화면 4: Stroop 게임 ===== -->
+    <section id="screen-stroop" class="screen game-screen">
+      <header class="game-header">
+        <button class="btn-icon" id="btn-stroop-back">← 나가기</button>
+        <span class="game-header-title">Stroop</span>
+        <span id="stroop-timer" class="timer">45</span>
+      </header>
+
+      <!-- 규칙 설명 -->
+      <div id="stroop-rule" class="rule-overlay">
+        <div class="rule-card">
+          <h2>규칙</h2>
+          <p>글자의 <strong>색깔</strong>을 선택하세요!<br />(뜻 말고요 😄)</p>
+          <div class="rule-example">
+            <span style="color:#3B82F6; font-size:32px; font-weight:900;">빨강</span>
+            <span class="rule-arrow">→ 파랑 선택 ✅</span>
+          </div>
+          <div class="rule-options">
+            <label class="toggle-label">
+              <input type="checkbox" id="colorblind-toggle" />
+              색맹 모드
+            </label>
+          </div>
+          <button id="btn-stroop-start" class="btn btn-primary btn-lg">준비됐어요!</button>
+        </div>
+      </div>
+
+      <!-- 게임 플레이 -->
+      <div id="stroop-play" class="stroop-play hidden">
+        <div class="score-bar">
+          <span>점수: <strong id="stroop-score">0</strong></span>
+          <span>콤보: <strong id="stroop-combo">0</strong> 🔥</span>
+        </div>
+        <div class="stimulus-card stroop-stimulus-card">
+          <span id="stroop-word" class="stroop-word">빨강</span>
+        </div>
+        <div id="stroop-buttons" class="stroop-buttons">
+          <button class="btn stroop-color-btn" data-color="빨강" style="background:#EF4444">빨강</button>
+          <button class="btn stroop-color-btn" data-color="파랑" style="background:#3B82F6">파랑</button>
+          <button class="btn stroop-color-btn" data-color="노랑" style="background:#F59E0B; color:#000">노랑</button>
+          <button class="btn stroop-color-btn" data-color="초록" style="background:#10B981">초록</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 화면 5: Go/No-Go 게임 ===== -->
+    <section id="screen-gonogo" class="screen game-screen">
+      <header class="game-header">
+        <button class="btn-icon" id="btn-gonogo-back">← 나가기</button>
+        <span class="game-header-title">Go/No-Go</span>
+        <span id="gonogo-timer" class="timer">60</span>
+      </header>
+
+      <!-- 규칙 설명 -->
+      <div id="gonogo-rule" class="rule-overlay">
+        <div class="rule-card">
+          <h2>규칙</h2>
+          <p>
+            <span class="go-symbol">●</span> 초록 원 → 빨리 탭!<br />
+            <span class="nogo-symbol">✕</span> 빨간 X → 참기!
+          </p>
+          <button id="btn-gonogo-start" class="btn btn-primary btn-lg">준비됐어요!</button>
+        </div>
+      </div>
+
+      <!-- 게임 플레이 -->
+      <div id="gonogo-play" class="gonogo-play hidden">
+        <div class="gonogo-stats">
+          <span>반응: <strong id="gonogo-go-count">0</strong></span>
+          <span>실수: <strong id="gonogo-errors">0</strong></span>
+        </div>
+        <div id="gonogo-arena" class="gonogo-arena">
+          <div id="gonogo-stimulus" class="gonogo-stimulus hidden"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 화면 6: 종합 결과 ===== -->
+    <section id="screen-result" class="screen">
+      <div class="result-content">
+        <div class="card result-profile-card">
+          <h2 id="result-title" class="result-title">🧠 님의 오늘 결과</h2>
+
+          <div class="result-bars">
+            <div class="result-bar-item">
+              <span class="result-bar-label">작업기억</span>
+              <div class="result-bar-track">
+                <div id="bar-memory" class="result-bar-fill" style="background:var(--color-nback); width:0%"></div>
+              </div>
+              <span id="val-memory" class="result-bar-val">0%</span>
+            </div>
+            <div class="result-bar-item">
+              <span class="result-bar-label">억제속도</span>
+              <div class="result-bar-track">
+                <div id="bar-speed" class="result-bar-fill" style="background:var(--color-stroop); width:0%"></div>
+              </div>
+              <span id="val-speed" class="result-bar-val">0%</span>
+            </div>
+            <div class="result-bar-item">
+              <span class="result-bar-label">억제정확도</span>
+              <div class="result-bar-track">
+                <div id="bar-inhibit" class="result-bar-fill" style="background:var(--color-gonogo); width:0%"></div>
+              </div>
+              <span id="val-inhibit" class="result-bar-val">0%</span>
+            </div>
+          </div>
+
+          <div class="brain-age-result">
+            <span class="brain-age-label">🧠 뇌 나이 추정</span>
+            <span id="result-brain-age" class="brain-age-number">--</span>
+            <span class="brain-age-unit">세</span>
+          </div>
+          <p class="legal-notice">※ 참고용 수치, 의학적 진단이 아닙니다</p>
+        </div>
+
+        <!-- AI 추천 메시지 -->
+        <div class="card ai-message-card">
+          <p id="ai-message" class="ai-message"></p>
+        </div>
+
+        <!-- 공유 버튼 -->
+        <div class="share-buttons">
+          <button id="btn-share-kakao" class="btn btn-kakao">카카오 공유</button>
+          <button id="btn-copy-link" class="btn btn-outline">🔗 링크 복사</button>
+        </div>
+
+        <!-- CTA -->
+        <div class="result-cta">
+          <button id="btn-retry" class="btn btn-secondary">다시 하기 🔄</button>
+          <button id="btn-subscribe" class="btn btn-primary">블로그 구독 ▶</button>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /#app -->
+
+  <!-- 스크립트 -->
+  <script src="data/stimuli.js"></script>
+  <script src="games/nback.js"></script>
+  <script src="games/stroop.js"></script>
+  <script src="games/gonogo.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
